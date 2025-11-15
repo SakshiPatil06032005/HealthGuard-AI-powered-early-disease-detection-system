@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Imaging Upload - HealthGuard</title>
+    <link rel="stylesheet" href="/static/css/upload.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="logo-section">
+        <img src="/static/images/au png.jpg" class="card-img1" alt="...">
+        <h1 class="top-head">AI Powered Early Disease Prediction</h1>
+        <img src="/static/images/3.O logo.png" class="card-img2" alt="...">
+    </div>
+    <div class="overall">
+        <div class="upload-container">
+            <h2>Upload Medical Image</h2>
+            <form action="/doctor-login/doctor-dashboard/doctor-upload-imaging" method="POST" enctype="multipart/form-data">
+                <!-- Image Type Selection Dropdown -->
+                <div class="input-group">
+                    <label for="image_type">
+                        <i class="fas fa-image"></i> Select Image Type:
+                    </label>
+                    <select name="image_type" id="image_type" required>
+                        <option value="">-- Choose Image Type --</option>
+                        <option value="xray">X-Ray</option>
+                        <option value="mri">MRI</option>
+                    </select>
+                </div>
+                
+                <!-- File Upload -->
+                <div class="input-group">
+                    <label for="image_file">
+                        <i class="fas fa-upload"></i> Choose Image File:
+                    </label>
+                    <input type="file" name="file" id="image_file" accept="image/*" required>
+                </div>
+                
+                <button class="upload-btn" type='submit'>
+                    <i class="fas fa-microscope"></i> Analyze Image
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

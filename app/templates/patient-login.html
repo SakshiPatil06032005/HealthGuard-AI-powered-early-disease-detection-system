@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Login - HealthGuard</title>
+    <link rel="stylesheet" href="/static/css/patient-login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="logo-text">
+                <h1>HealthGuard</h1>
+                <p class="tagline">Check before it's too late</p>
+            </div>
+        </div>
+    </header>
+    <div class="wrap-bg">
+        <div class="wrapper">
+            <div class="content">
+                <span class="icon-close"><ion-icon name="close-outline" onclick="goToHomePage()"></ion-icon></span>
+                
+                <!-- Login Form -->
+                <div class="form-box login" id="loginForm">
+                    <h2>Login</h2>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <form action="/patient-login" method="POST">
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+                            <input type="text" required name="patientID" />
+                            <label>User Id</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+                            <input type="password" required name="patientPASS" />
+                            <label>Password</label>
+                        </div>
+                        <button type="submit" class="btn">Login</button>
+                    </form>
+                    <div class="register-link">
+                        <p>Don't have an account? <a href="#" onclick="showRegisterForm(); return false;">Sign Up</a></p>
+                    </div>
+                </div>
+
+                <!-- Registration Form -->
+                <div class="form-box register" id="registerForm" style="display: none;">
+                    <h2>Sign Up</h2>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <form action="/patient-register" method="POST">
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+                            <input type="text" required name="username" />
+                            <label>Username</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="person-outline"></ion-icon></span>
+                            <input type="text" required name="full_name" />
+                            <label>Full Name</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
+                            <input type="email" required name="email" />
+                            <label>Email</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="call-outline"></ion-icon></span>
+                            <input type="tel" name="phone" pattern="[0-9]{10}" />
+                            <label>Phone (10 digits)</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="calendar-outline"></ion-icon></span>
+                            <input type="number" name="age" min="1" max="120" />
+                            <label>Age</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="male-female-outline"></ion-icon></span>
+                            <select name="gender" style="width: 100%; height: 100%; background: transparent; border: none; outline: none; font-size: 1em; color: #2c3e50; font-weight: 500; padding: 0 35px 0 5px;">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+                            <input type="password" required name="password" minlength="6" />
+                            <label>Password (min 6 chars)</label>
+                        </div>
+                        <div class="input-box">
+                            <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+                            <input type="password" required name="confirm_password" minlength="6" />
+                            <label>Confirm Password</label>
+                        </div>
+                        <button type="submit" class="btn">Sign Up</button>
+                    </form>
+                    <div class="register-link">
+                        <p>Already have an account? <a href="#" onclick="showLoginForm(); return false;">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2025 HealthGuard — All Rights Reserved.</p>
+    </footer>
+</body>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<script src="/static/js/script.js"></script>
+<script>
+    function showRegisterForm() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+    }
+    
+    function showLoginForm() {
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+    }
+</script>
+</html>

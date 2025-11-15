@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthGuard - AI-Powered Early Disease Detection System</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>HealthGuard</h1>
+                    <p class="nav-tagline">AI-Powered Disease Detection</p>
+                </div>
+            </div>
+            
+            <div class="nav-links">
+                <a href="/" class="nav-link active">Home</a>
+                <a href="#about" class="nav-link">About Us</a>
+                <a href="#contact" class="nav-link">Contact Us</a>
+                <a href="/login" class="nav-link login-btn">Login</a>
+            </div>
+            
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="/" class="mobile-nav-link">Home</a>
+        <a href="#about" class="mobile-nav-link">About Us</a>
+        <a href="#contact" class="mobile-nav-link">Contact Us</a>
+        <a href="/login" class="mobile-nav-link">Login</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to HealthGuard</h1>
+            <p class="hero-subtitle">AI-Powered Early Disease Detection System</p>
+            <p class="hero-description">
+                Empowering rural clinics and telemedicine providers with advanced AI technology 
+                for early diagnosis through X-Ray and MRI image analysis
+            </p>
+            <div class="hero-buttons">
+                <a href="/login" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Get Started
+                </a>
+                <a href="#about" class="btn btn-secondary">
+                    <i class="fas fa-info-circle"></i> Learn More
+                </a>
+            </div>
+        </div>
+        
+        <div class="hero-image">
+            <div class="floating-card">
+                <i class="fas fa-x-ray"></i>
+                <p>X-Ray Analysis</p>
+            </div>
+            <div class="floating-card">
+                <i class="fas fa-brain"></i>
+                <p>MRI Scanning</p>
+            </div>
+            <div class="floating-card">
+                <i class="fas fa-heartbeat"></i>
+                <p>Early Detection</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2>Our Key Features</h2>
+            <p>Advanced healthcare solutions powered by artificial intelligence</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-microscope"></i>
+                </div>
+                <h3>AI-Powered Analysis</h3>
+                <p>Advanced deep learning algorithms analyze medical images with high accuracy</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Early Detection</h3>
+                <p>Identify potential diseases at early stages for timely intervention</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-hospital"></i>
+                </div>
+                <h3>Rural Healthcare</h3>
+                <p>Bringing advanced diagnostic capabilities to underserved areas</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3>Telemedicine Ready</h3>
+                <p>Seamless integration with telemedicine platforms for remote care</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Secure & Private</h3>
+                <p>Healthcare data protected with industry-standard security measures</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Detailed Reports</h3>
+                <p>Comprehensive diagnostic reports with actionable insights</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Us Section -->
+    <section id="about" class="about-section">
+        <div class="about-container">
+            <div class="about-content">
+                <h2>About HealthGuard</h2>
+                <div class="about-text">
+                    <p>
+                        <strong>HealthGuard</strong> is an AI-powered early disease detection system specifically 
+                        designed to help rural clinics and telemedicine providers by analyzing X-Ray and MRI images 
+                        for early diagnosis of diseases.
+                    </p>
+                    <p>
+                        Our mission is to bridge the healthcare gap by bringing advanced diagnostic capabilities 
+                        to underserved communities. Through the power of artificial intelligence and machine learning, 
+                        we enable healthcare providers to detect diseases at their earliest stages, significantly 
+                        improving patient outcomes.
+                    </p>
+                    <p>
+                        HealthGuard leverages state-of-the-art deep learning models trained on extensive medical 
+                        imaging datasets to provide accurate, reliable diagnostic support. Our system is designed 
+                        to complement healthcare professionals' expertise, offering a second opinion and highlighting 
+                        potential areas of concern for further investigation.
+                    </p>
+                </div>
+                
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-hospital-user"></i>
+                        <h3>For Healthcare Professionals</h3>
+                        <p>Doctors, radiologists, and medical staff</p>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <h3>For Patients</h3>
+                        <p>Access to advanced diagnostic services</p>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-laptop-medical"></i>
+                        <h3>For Telemedicine</h3>
+                        <p>Remote diagnostic support and analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Us Section -->
+    <section id="contact" class="contact-section">
+        <div class="contact-container">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>Get in touch with our team for support and inquiries</p>
+            </div>
+            
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>Email Support</h3>
+                        <p><a href="mailto:healthguard@support.com">healthguard@support.com</a></p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <h3>Phone Support</h3>
+                        <p>Available Monday - Friday, 9AM - 5PM</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Address</h3>
+                        <p>Healthcare Innovation Center</p>
+                    </div>
+                </div>
+                
+                <div class="contact-form-container">
+                    <form class="contact-form" onsubmit="handleContactSubmit(event)">
+                        <div class="form-group">
+                            <label for="name">
+                                <i class="fas fa-user"></i> Full Name
+                            </label>
+                            <input type="text" id="name" name="name" required placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i> Email Address
+                            </label>
+                            <input type="email" id="email" name="email" required placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">
+                                <i class="fas fa-tag"></i> Subject
+                            </label>
+                            <input type="text" id="subject" name="subject" required placeholder="What is this regarding?">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">
+                                <i class="fas fa-comment"></i> Message
+                            </label>
+                            <textarea id="message" name="message" rows="5" required placeholder="Your message here..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>HealthGuard</h3>
+                <p>AI-Powered Early Disease Detection System</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="/login">Login</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p><i class="fas fa-envelope"></i> healthguard@support.com</p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 HealthGuard — All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu if open
+                    document.getElementById('mobileMenu').classList.remove('active');
+                }
+            });
+        });
+
+        // Highlight active nav link on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}` || (current === '' && link.getAttribute('href') === '/')) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        function handleContactSubmit(event) {
+            event.preventDefault();
+            alert('Thank you for contacting us! We will get back to you soon.');
+            event.target.reset();
+        }
+    </script>
+</body>
+
+</html>

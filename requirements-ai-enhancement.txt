@@ -1,0 +1,32 @@
+# Enhanced AI System - Additional Requirements
+# Add these to your existing requirements.txt or install separately
+
+# Core AI/ML Libraries (if not already installed)
+tensorflow>=2.10.0
+keras>=2.10.0
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.0.0
+
+# Image Processing
+pillow>=9.0.0
+opencv-python>=4.5.0
+
+# PDF Generation
+fpdf>=1.7.2
+
+# Data Handling
+scipy>=1.7.0
+
+# Optional but recommended for better performance
+# tensorflow-gpu>=2.10.0  # If you have NVIDIA GPU with CUDA
+
+# For dataset downloading
+# kaggle>=1.5.12  # Optional, for Kaggle dataset downloads
+
+# For visualization (optional)
+# matplotlib>=3.4.0
+# seaborn>=0.11.0
+
+# For progress bars (optional)
+# tqdm>=4.62.0

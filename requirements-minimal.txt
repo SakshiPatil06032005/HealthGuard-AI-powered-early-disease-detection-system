@@ -1,0 +1,26 @@
+# Core dependencies
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Werkzeug==2.3.7
+pillow==10.0.0
+numpy==1.24.3
+tensorflow==2.13.0
+opencv-python==4.8.0.76
+requests==2.31.0
+
+# UI and templating
+Jinja2==3.1.2
+itsdangerous==2.1.2
+click==8.1.7
+
+# Database
+SQLAlchemy==2.0.20
+
+# PDF generation
+fpdf==1.7.2
+
+# OpenAI integration (optional)
+openai==0.28.0
+
+# Development
+python-dotenv==1.0.0

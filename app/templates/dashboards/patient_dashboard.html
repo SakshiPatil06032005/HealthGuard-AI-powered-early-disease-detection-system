@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Medical AI System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-hospital text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Medical AI System</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-blue-100"><i class="fas fa-user mr-2"></i>{{ patient.full_name }}</span>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                        <button type="submit" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Patient Dashboard</h2>
+            <p class="text-gray-600">Welcome, <strong>{{ patient.full_name }}</strong></p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Profile Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <i class="fas fa-user-circle text-4xl text-blue-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Age</h3>
+                <p class="text-2xl font-bold text-gray-800">{{ patient.age or 'N/A' }}</p>
+            </div>
+
+            <!-- Gender Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <i class="fas fa-venus-mars text-4xl text-blue-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Gender</h3>
+                <p class="text-2xl font-bold text-gray-800">{{ 'Male' if patient.gender == 'M' else 'Female' if patient.gender == 'F' else 'N/A' }}</p>
+            </div>
+
+            <!-- Predictions Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <i class="fas fa-chart-bar text-4xl text-blue-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Total Predictions</h3>
+                <p class="text-2xl font-bold text-gray-800">{{ stats.total_predictions }}</p>
+            </div>
+
+            <!-- Last Checkup -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <i class="fas fa-calendar-check text-4xl text-blue-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Assigned Doctors</h3>
+                <p class="text-2xl font-bold text-gray-800">{{ doctors|length }}</p>
+            </div>
+        </div>
+
+        <!-- Assigned Doctors -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-user-md mr-2 text-blue-600"></i>Your Doctors
+                </h3>
+                {% if doctors %}
+                    <div class="space-y-4">
+                        {% for doctor in doctors %}
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800">{{ doctor.full_name }}</h4>
+                                <p class="text-sm text-gray-600"><i class="fas fa-stethoscope mr-2"></i>{{ doctor.specialization }}</p>
+                                <p class="text-sm text-gray-600 mt-2"><i class="fas fa-phone mr-2"></i>{{ doctor.phone }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-600 text-center py-8">
+                        <i class="fas fa-info-circle mr-2"></i>No doctors assigned yet
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-quick-links mr-2 text-blue-600"></i>Quick Actions
+                </h3>
+                <div class="space-y-3">
+                    <a href="{{ url_for('dashboards.symptom_prediction') }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition">
+                        <i class="fas fa-heartbeat mr-2"></i>Symptom Checker
+                    </a>
+                    <a href="{{ url_for('dashboards.medical_imaging_prediction') }}" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition">
+                        <i class="fas fa-x-ray mr-2"></i>X-Ray/MRI
+                    </a>
+                    <a href="{{ url_for('dashboards.prediction_history') }}" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition">
+                        <i class="fas fa-history mr-2"></i>View History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Predictions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-history mr-2 text-blue-600"></i>Recent Predictions
+            </h3>
+            {% if stats.recent_predictions %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">Date</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">Type</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">Result</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">Confidence</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            {% for pred in stats.recent_predictions %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-gray-800">{{ pred.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-gray-600">Medical Scan</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-800">{{ pred.predicted_disease or 'N/A' }}</td>
+                                    <td class="px-4 py-3">
+                                        {% if pred.confidence %}
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-32 bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-blue-600 h-2 rounded-full confidence-bar" data-confidence="{{ pred.confidence }}"></div>
+                                                </div>
+                                                <span class="text-sm font-semibold">{{ "%.1f"|format(pred.confidence) }}%</span>
+                                            </div>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <a href="{{ url_for('dashboards.patient_view_prediction', prediction_id=pred.id) }}" class="text-blue-600 hover:text-blue-800 font-semibold">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-600 text-center py-8">
+                    <i class="fas fa-inbox mr-2"></i>No predictions yet. Start with a symptom check or upload an X-ray!
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Welcome Message -->
+        <div class="bg-gradient-to-r from-blue-100 to-blue-50 border-l-4 border-blue-600 rounded-lg p-6">
+            <h4 class="text-lg font-bold text-blue-800 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>How to Use This System
+            </h4>
+            <ul class="space-y-2 text-gray-700 text-sm">
+                <li><i class="fas fa-check text-green-600 mr-2"></i><strong>Symptom Checker:</strong> Describe your symptoms and get preliminary disease predictions</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i><strong>Medical Uploads:</strong> Upload X-ray or MRI images for AI analysis</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i><strong>Track History:</strong> Keep all your medical predictions in one place</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i><strong>Share with Doctors:</strong> Your doctors can review all your records</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Set confidence bar widths
+        document.querySelectorAll('.confidence-bar').forEach(bar => {
+            const confidence = bar.getAttribute('data-confidence');
+            bar.style.width = confidence + '%';
+        });
+    </script>
+</body>
+</html>

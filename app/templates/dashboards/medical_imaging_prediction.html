@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Imaging Analysis - Medical AI System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-image text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Medical Imaging Analysis</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% if user.role == 'patient' %}{{ url_for('dashboards.patient_dashboard') }}{% elif user.role == 'doctor' %}{{ url_for('dashboards.doctor_dashboard') }}{% else %}{{ url_for('dashboards.admin_dashboard') }}{% endif %}" 
+                       class="text-blue-100 hover:text-white">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                        <button type="submit" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-image mr-2 text-purple-600"></i>Medical Image Analysis
+            </h2>
+            <p class="text-gray-600">Upload X-ray or MRI images for AI-powered disease prediction with automatic type detection</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Upload Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-upload mr-2 text-purple-600"></i>Upload Medical Image
+                    </h3>
+
+                    <form method="POST" enctype="multipart/form-data" id="medicalImageForm">
+                        <!-- File Upload Area -->
+                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-500 transition"
+                             id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-purple-500 mb-4"></i>
+                            <p class="text-gray-700 font-semibold mb-2">Drag and drop your medical image here</p>
+                            <p class="text-gray-500 text-sm mb-4">or</p>
+                            <input type="file" name="medical_image" id="medicalImageInput" class="hidden" accept=".png,.jpg,.jpeg,.pdf" required onchange="updateFileName(this)">
+                            <label for="medicalImageInput" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg cursor-pointer transition inline-block">
+                                <i class="fas fa-folder-open mr-2"></i>Select File
+                            </label>
+                            <p class="text-gray-500 text-xs mt-4">Supported formats: PNG, JPG, JPEG, PDF (Max 16MB)</p>
+                        </div>
+
+                        <!-- File Name Display -->
+                        <div id="fileNameDisplay" class="mt-4 hidden">
+                            <p class="text-sm text-gray-600">
+                                Selected file: <span id="fileName" class="font-semibold text-purple-600"></span>
+                            </p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="mt-6 flex gap-4">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center">
+                                <i class="fas fa-magic mr-2"></i>Analyze Image
+                            </button>
+                            <button type="reset" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center">
+                                <i class="fas fa-times mr-2"></i>Clear
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Information Box -->
+                    <div class="mt-8 bg-purple-50 border-l-4 border-purple-600 p-4">
+                        <h4 class="font-semibold text-purple-800 mb-2">
+                            <i class="fas fa-info-circle mr-2"></i>About Medical Imaging Analysis
+                        </h4>
+                        <ul class="text-sm text-purple-700 space-y-1">
+                            <li>✓ Automatically detects X-Ray or MRI image type</li>
+                            <li>✓ Analyzes chest X-rays for pneumonia, COVID-19, TB, and lung conditions</li>
+                            <li>✓ Analyzes MRI scans for brain tumors and neurological conditions</li>
+                            <li>✓ Provides confidence scores and severity assessment</li>
+                            <li>✓ Generates PDF report with medicine recommendations</li>
+                            <li>⚠️ Results are for informational purposes only</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            {% if predictions %}
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-results mr-2 text-green-600"></i>Analysis Results
+                    </h3>
+
+                    <!-- Predictions -->
+                    <div class="space-y-4">
+                        {% for prediction in predictions %}
+                            {% set color_map = {'low': 'green', 'moderate': 'yellow', 'high': 'red'} %}
+                            {% set color = color_map.get(prediction.severity, 'gray') %}
+                            <div class="p-4 rounded-lg border-l-4 {% if color == 'green' %}border-green-500 bg-green-50{% elif color == 'yellow' %}border-yellow-500 bg-yellow-50{% else %}border-red-500 bg-red-50{% endif %}">
+                                <p class="font-bold text-gray-800">{{ prediction.disease }}</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Confidence: <span class="font-semibold">{{ prediction.confidence }}%</span>
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    Severity: <span class="font-semibold">{{ prediction.severity.upper() }}</span>
+                                </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Medicine Suggestions -->
+                    {% if medicine_suggestions %}
+                    <div class="mt-6 pt-6 border-t">
+                        <h4 class="font-bold text-gray-800 mb-4">
+                            <i class="fas fa-pills mr-2 text-blue-600"></i>Recommended Treatment
+                        </h4>
+                        
+                        {% if medicine_suggestions.get('primary_medicines') %}
+                        <div class="mb-4">
+                            <p class="font-semibold text-sm text-gray-700 mb-2">Primary Medicines:</p>
+                            {% for med in medicine_suggestions.primary_medicines[:2] %}
+                            <p class="text-xs text-gray-600 mb-1">
+                                • <strong>{{ med.name }}</strong><br>
+                                <span class="ml-3">{{ med.dosage }}</span>
+                            </p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if medicine_suggestions.get('precautions') %}
+                        <div class="mb-4">
+                            <p class="font-semibold text-sm text-gray-700 mb-2">Precautions:</p>
+                            {% for precaution in medicine_suggestions.precautions[:2] %}
+                            <p class="text-xs text-gray-600 mb-1">• {{ precaution }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Download Report -->
+                    {% if uploaded_filename %}
+                    <div class="mt-6">
+                        <a href="{{ url_for('dashboards.download_report', prediction_id=0) }}" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition block">
+                            <i class="fas fa-download mr-2"></i>Download Report PDF
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% else %}
+                    <!-- No Results Yet -->
+                    <div class="text-center py-8">
+                        <i class="fas fa-file-image text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">Upload an X-ray or MRI image to see analysis results</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const medicalImageInput = document.getElementById('medicalImageInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileName = document.getElementById('fileName');
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('border-purple-500', 'bg-purple-50');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                medicalImageInput.files = files;
+                updateFileName(medicalImageInput);
+            }
+        }
+
+        function updateFileName(input) {
+            if (input.files && input.files.length > 0) {
+                fileName.textContent = input.files[0].name;
+                fileNameDisplay.classList.remove('hidden');
+            } else {
+                fileNameDisplay.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Medical AI System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-shield-alt text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Admin Panel</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-red-100"><i class="fas fa-user-tie mr-2"></i>Administrator</span>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                        <button type="submit" class="bg-red-700 hover:bg-red-900 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">System Administration</h2>
+            <p class="text-gray-600">Manage users, doctors, patients, and system statistics</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+                <i class="fas fa-users text-4xl text-blue-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Total Users</h3>
+                <p class="text-3xl font-bold text-gray-800">{{ stats.total_users }}</p>
+            </div>
+
+            <!-- Doctors -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-600">
+                <i class="fas fa-user-md text-4xl text-green-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Doctors</h3>
+                <p class="text-3xl font-bold text-gray-800">{{ stats.total_doctors }}</p>
+            </div>
+
+            <!-- Patients -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-600">
+                <i class="fas fa-hospital-user text-4xl text-purple-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Patients</h3>
+                <p class="text-3xl font-bold text-gray-800">{{ stats.total_patients }}</p>
+            </div>
+
+            <!-- Predictions -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-600">
+                <i class="fas fa-chart-line text-4xl text-orange-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Predictions</h3>
+                <p class="text-3xl font-bold text-gray-800">{{ stats.total_predictions }}</p>
+            </div>
+
+            <!-- Today -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-pink-600">
+                <i class="fas fa-calendar-alt text-4xl text-pink-600 mb-3"></i>
+                <h3 class="text-gray-600 text-sm font-semibold">Today</h3>
+                <p class="text-3xl font-bold text-gray-800">{{ stats.predictions_today }}</p>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Doctors Management -->
+            <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-1">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-user-md mr-2 text-green-600"></i>Doctors ({{ stats.total_doctors }})
+                </h3>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    {% if doctors %}
+                        {% for doctor in doctors[:5] %}
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                <p class="font-semibold text-gray-800">{{ doctor.full_name }}</p>
+                                <p class="text-sm text-gray-600"><i class="fas fa-stethoscope mr-1"></i>{{ doctor.specialization }}</p>
+                                <p class="text-xs text-gray-500 mt-1">License: {{ doctor.license_number }}</p>
+                            </div>
+                        {% endfor %}
+                        {% if stats.total_doctors > 5 %}
+                            <p class="text-center text-sm text-gray-600 py-2">+{{ stats.total_doctors - 5 }} more...</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-6">No doctors yet</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Patients Management -->
+            <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-1">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-hospital-user mr-2 text-purple-600"></i>Patients ({{ stats.total_patients }})
+                </h3>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    {% if patients %}
+                        {% for patient in patients[:5] %}
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                <p class="font-semibold text-gray-800">{{ patient.full_name }}</p>
+                                <p class="text-sm text-gray-600"><i class="fas fa-user mr-1"></i>Age: {{ patient.age or 'N/A' }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ patient.email }}</p>
+                            </div>
+                        {% endfor %}
+                        {% if stats.total_patients > 5 %}
+                            <p class="text-center text-sm text-gray-600 py-2">+{{ stats.total_patients - 5 }} more...</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-6">No patients yet</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-cogs mr-2 text-red-600"></i>Management
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="openAddDoctorModal()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Add Doctor
+                    </button>
+                    <button onclick="openAddPatientModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Add Patient
+                    </button>
+                    <a href="{{ url_for('dashboards.admin_report_generator') }}" class="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center">
+                        <i class="fas fa-file-pdf mr-2"></i>Generate Report
+                    </a>
+                    <a href="{{ url_for('dashboards.admin_settings') }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center">
+                        <i class="fas fa-sliders-h mr-2"></i>Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="bg-gradient-to-r from-red-100 to-red-50 border-l-4 border-red-600 rounded-lg p-6">
+            <h4 class="text-lg font-bold text-red-800 mb-3">
+                <i class="fas fa-info-circle mr-2"></i>System Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div>
+                    <p><strong>System Status:</strong> <span class="text-green-600">✓ Operational</span></p>
+                    <p><strong>Database:</strong> <span class="text-blue-600">SQLite (Production-ready)</span></p>
+                </div>
+                <div>
+                    <p><strong>AI Models:</strong> <span class="text-green-600">✓ Active (Gemini 2.0 + Pattern Analysis)</span></p>
+                    <p><strong>API Status:</strong> <span class="text-green-600">✓ Connected</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Doctor Modal -->
+    <div id="addDoctorModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold"><i class="fas fa-user-md mr-2"></i>Add New Doctor</h3>
+                    <button onclick="closeAddDoctorModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+                </div>
+            </div>
+            <form id="addDoctorForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                        <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Dr. John Smith">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Specialization *</label>
+                        <input type="text" name="specialization" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Cardiology">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="doctor@healthguard.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                        <input type="tel" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="+1234567890">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">License Number</label>
+                        <input type="text" name="license_number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="MED-12345">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
+                        <input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="drjsmith">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                        <input type="password" name="password" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Minimum 6 characters">
+                    </div>
+                </div>
+                <div id="doctorFormMessage" class="hidden p-3 rounded-lg text-sm"></div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddDoctorModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Add Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div id="addPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold"><i class="fas fa-hospital-user mr-2"></i>Add New Patient</h3>
+                    <button onclick="closeAddPatientModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+                </div>
+            </div>
+            <form id="addPatientForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                        <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Age</label>
+                        <input type="number" name="age" min="0" max="150" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="25">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="patient@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                        <input type="tel" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="+1234567890">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                        <select name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
+                        <input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="johndoe">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                        <input type="text" name="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="123 Main St, City, State">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                        <input type="password" name="password" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Minimum 6 characters">
+                    </div>
+                </div>
+                <div id="patientFormMessage" class="hidden p-3 rounded-lg text-sm"></div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddPatientModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Add Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal Functions
+        function openAddDoctorModal() {
+            document.getElementById('addDoctorModal').classList.remove('hidden');
+            document.getElementById('addDoctorModal').classList.add('flex');
+        }
+
+        function closeAddDoctorModal() {
+            document.getElementById('addDoctorModal').classList.add('hidden');
+            document.getElementById('addDoctorModal').classList.remove('flex');
+            document.getElementById('addDoctorForm').reset();
+            document.getElementById('doctorFormMessage').classList.add('hidden');
+        }
+
+        function openAddPatientModal() {
+            document.getElementById('addPatientModal').classList.remove('hidden');
+            document.getElementById('addPatientModal').classList.add('flex');
+        }
+
+        function closeAddPatientModal() {
+            document.getElementById('addPatientModal').classList.add('hidden');
+            document.getElementById('addPatientModal').classList.remove('flex');
+            document.getElementById('addPatientForm').reset();
+            document.getElementById('patientFormMessage').classList.add('hidden');
+        }
+
+        // Add Doctor Form Submission
+        document.getElementById('addDoctorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('doctorFormMessage');
+            
+            try {
+                const response = await fetch('{{ url_for("dashboards.add_doctor") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.className = 'p-3 rounded-lg text-sm bg-green-100 text-green-800 border border-green-300';
+                    messageDiv.textContent = data.message;
+                    messageDiv.classList.remove('hidden');
+                    
+                    // Reset form and close modal after delay
+                    setTimeout(() => {
+                        closeAddDoctorModal();
+                        location.reload(); // Refresh to show new doctor
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-800 border border-red-300';
+                    messageDiv.textContent = data.message;
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                messageDiv.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-800 border border-red-300';
+                messageDiv.textContent = 'Error: ' + error.message;
+                messageDiv.classList.remove('hidden');
+            }
+        });
+
+        // Add Patient Form Submission
+        document.getElementById('addPatientForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('patientFormMessage');
+            
+            try {
+                const response = await fetch('{{ url_for("dashboards.add_patient") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.className = 'p-3 rounded-lg text-sm bg-green-100 text-green-800 border border-green-300';
+                    messageDiv.textContent = data.message;
+                    messageDiv.classList.remove('hidden');
+                    
+                    // Reset form and close modal after delay
+                    setTimeout(() => {
+                        closeAddPatientModal();
+                        location.reload(); // Refresh to show new patient
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-800 border border-red-300';
+                    messageDiv.textContent = data.message;
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                messageDiv.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-800 border border-red-300';
+                messageDiv.textContent = 'Error: ' + error.message;
+                messageDiv.classList.remove('hidden');
+            }
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const doctorModal = document.getElementById('addDoctorModal');
+            const patientModal = document.getElementById('addPatientModal');
+            
+            if (event.target == doctorModal) {
+                closeAddDoctorModal();
+            }
+            if (event.target == patientModal) {
+                closeAddPatientModal();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - HealthGuard</title>
+  <link rel="stylesheet" href="/static/css/admin-login.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <div class="logo-icon">
+        <i class="fas fa-heartbeat"></i>
+      </div>
+      <div class="logo-text">
+        <h1>HealthGuard</h1>
+        <p class="tagline">Check before it's too late</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap-bg">
+    <div class="wrapper">
+
+
+      <div class="content">
+        <span class="icon-close"><ion-icon name="close-outline" onclick="goToHomePage()"></ion-icon></span>
+        <div class="form-box login">
+          <h2>Login</h2>
+          <form action="/admin-login" method="POST">
+            <div class="input-box">
+              <span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+              <input type="text" required name="adminID" />
+              <label>Admin Id</label>
+            </div>
+            <div class="input-box">
+              <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+              <input type="password" required name="adminPASS"/>
+              <label>Password</label>
+            </div>
+        
+
+            <button type="submit" class="btn">Login</button>
+
+
+            <!-- <div class="login-register">
+            <p>
+              Don't have an account?
+              <a href="#" class="register-link">Register</a>
+            </p>
+          </div> -->
+
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+    <p>&copy; 2025 HealthGuard — All Rights Reserved.</p>
+  </footer>
+</body>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<script src="/static/js/script.js"></script>
+
+</html>

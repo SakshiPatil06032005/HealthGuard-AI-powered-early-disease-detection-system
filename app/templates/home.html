@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthGuard - AI-Powered Early Disease Prediction</title>
+    <link rel="stylesheet" href="/static/css/home.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="logo-text">
+                <h1>HealthGuard</h1>
+                <p class="tagline">Check before it's too late</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="login-section">
+            <h2 class="welcome-text">Welcome to HealthGuard</h2>
+            <p class="subtitle">Select your role to continue</p>
+            
+            <div class="cards-container">
+                <!-- Patient Login Card -->
+                <a href="/patient-login" class="login-card">
+                    <div class="card-icon patient-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 class="card-title">Patient Login</h3>
+                    <p class="card-description">Access your health records and reports</p>
+                    <button class="card-button">
+                        <span>Continue</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </a>
+
+                <!-- Doctor Login Card -->
+                <a href="/doctor-login" class="login-card">
+                    <div class="card-icon doctor-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <h3 class="card-title">Doctor Login</h3>
+                    <p class="card-description">Manage patients and medical analysis</p>
+                    <button class="card-button">
+                        <span>Continue</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </a>
+
+                <!-- Admin Login Card -->
+                <a href="/admin-login" class="login-card">
+                    <div class="card-icon admin-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="card-title">Admin Login</h3>
+                    <p class="card-description">System administration and oversight</p>
+                    <button class="card-button">
+                        <span>Continue</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </a>
+
+                <!-- Asha Worker Login Card -->
+                <a href="{{ url_for('auth.asha_login') }}" class="login-card">
+                    <div class="card-icon asha-icon">
+                        <i class="fas fa-user-nurse"></i>
+                    </div>
+                    <h3 class="card-title">Asha Worker Login</h3>
+                    <p class="card-description">Manage patients in your assigned region</p>
+                    <button class="card-button">
+                        <span>Continue</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 HealthGuard — All Rights Reserved.</p>
+    </footer>
+</body>
+
+</html>

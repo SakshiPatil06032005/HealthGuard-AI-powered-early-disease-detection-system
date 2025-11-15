@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Prediction - Medical AI System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-heartbeat text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Medical AI System</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% if user.role == 'patient' %}{{ url_for('dashboards.patient_dashboard') }}{% elif user.role == 'doctor' %}{{ url_for('dashboards.doctor_dashboard') }}{% else %}{{ url_for('dashboards.admin_dashboard') }}{% endif %}" 
+                       class="text-blue-100 hover:text-white">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                        <button type="submit" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-stethoscope mr-2 text-blue-600"></i>Symptom Checker
+            </h2>
+            <p class="text-gray-600">Select your symptoms or use voice input to get preliminary disease predictions</p>
+        </div>
+
+        <!-- Voice Input Section -->
+        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-microphone mr-2 text-purple-600"></i>Voice Input
+                    </h3>
+                    <p class="text-sm text-gray-600">Speak your symptoms in English for instant analysis</p>
+                </div>
+                <button id="voiceInputBtn" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-microphone mr-2"></i>🎙 Speak Symptoms
+                </button>
+            </div>
+            
+            <!-- Browser Compatibility Notice -->
+            <div id="browserNotice" class="hidden mb-4">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>Voice input requires an external browser.</strong><br>
+                                Please open this page in <strong>Chrome</strong>, <strong>Edge</strong>, or <strong>Safari</strong>:<br>
+                                <code class="bg-yellow-100 px-2 py-1 rounded mt-1 inline-block">http://localhost:3000</code>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voice Recording Status -->
+            <div id="voiceStatus" class="hidden">
+                <div class="bg-white rounded-lg p-4 border-2 border-purple-300">
+                    <div class="flex items-center space-x-3">
+                        <div class="recording-indicator">
+                            <div class="recording-dot"></div>
+                        </div>
+                        <span class="text-gray-700 font-semibold" id="statusText">Listening...</span>
+                        <div class="ml-auto">
+                            <span class="text-sm text-gray-500" id="recordingTimer">0s / 5s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voice Results -->
+            <div id="voiceResults" class="hidden mt-4">
+                <div class="bg-white rounded-lg p-4 border-2 border-green-300">
+                    <h4 class="font-bold text-gray-800 mb-2">
+                        <i class="fas fa-check-circle text-green-600 mr-2"></i>Recognized Speech
+                    </h4>
+                    <p class="text-gray-700 mb-3" id="transcriptText"></p>
+                    <div class="text-sm text-gray-600">
+                        <p><strong>Detected Symptoms:</strong> <span id="detectedSymptoms"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voice Error -->
+            <div id="voiceError" class="hidden mt-4">
+                <div class="bg-red-50 rounded-lg p-4 border-2 border-red-300">
+                    <h4 class="font-bold text-red-800 mb-2">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Error
+                    </h4>
+                    <p class="text-red-700" id="errorText"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Symptom Selection Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <form method="POST" action="{{ url_for('dashboards.symptom_prediction') }}" id="symptomForm">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">
+                            <i class="fas fa-list mr-2 text-blue-600"></i>Available Symptoms
+                        </h3>
+
+                        <!-- Symptom Checkboxes -->
+                        <div class="space-y-4">
+                            <!-- Respiratory Symptoms -->
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-3 text-lg">
+                                    <i class="fas fa-lungs text-blue-600 mr-2"></i>Respiratory Symptoms
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-4">
+                                    {% for symptom in symptoms %}
+                                        {% if 'cough' in symptom.lower() or 'breath' in symptom.lower() or 'chest' in symptom.lower() %}
+                                            <label class="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition">
+                                                <input type="checkbox" name="symptoms" value="{{ symptom }}" 
+                                                    {% if symptom in selected_symptoms %}checked{% endif %}
+                                                    class="w-5 h-5 text-blue-600 rounded">
+                                                <span class="text-gray-700">{{ symptom }}</span>
+                                            </label>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- General Symptoms -->
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-3 text-lg">
+                                    <i class="fas fa-flask text-green-600 mr-2"></i>General Symptoms
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-4">
+                                    {% for symptom in symptoms %}
+                                        {% if symptom.lower() not in 'cough,chest,shortness of breath,loss of smell,loss of taste,runny nose,stuffy nose,sneezing,itchy eyes,watery eyes' %}
+                                            <label class="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition">
+                                                <input type="checkbox" name="symptoms" value="{{ symptom }}" 
+                                                    {% if symptom in selected_symptoms %}checked{% endif %}
+                                                    class="w-5 h-5 text-blue-600 rounded">
+                                                <span class="text-gray-700">{{ symptom }}</span>
+                                            </label>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- ENT/Allergy Symptoms -->
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-3 text-lg">
+                                    <i class="fas fa-ear text-purple-600 mr-2"></i>ENT & Allergy Symptoms
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-4">
+                                    {% for symptom in symptoms %}
+                                        {% if 'nose' in symptom.lower() or 'eye' in symptom.lower() or 'throat' in symptom.lower() or 'smell' in symptom.lower() or 'taste' in symptom.lower() %}
+                                            <label class="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition">
+                                                <input type="checkbox" name="symptoms" value="{{ symptom }}" 
+                                                    {% if symptom in selected_symptoms %}checked{% endif %}
+                                                    class="w-5 h-5 text-blue-600 rounded">
+                                                <span class="text-gray-700">{{ symptom }}</span>
+                                            </label>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex space-x-4">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition">
+                                <i class="fas fa-search mr-2"></i>Check Symptoms
+                            </button>
+                            <button type="reset" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg transition">
+                                <i class="fas fa-redo mr-2"></i>Clear All
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Predictions Results -->
+            <div class="lg:col-span-1" id="predictions-container">
+                {% if predictions %}
+                    <div class="bg-white rounded-lg shadow-md p-6" id="predictions">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">
+                            <i class="fas fa-chart-bar mr-2 text-green-600"></i>Predictions
+                        </h3>
+                        <div class="space-y-3">
+                            {% for disease, confidence, severity in predictions %}
+                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-bold text-gray-800">{{ disease }}</h4>
+                                        <span class="text-sm font-bold text-blue-600">{{ "%.1f"|format(confidence) }}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full confidence-bar" data-confidence="{{ confidence }}"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Important Notice -->
+                        <div class="mt-6 bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+                            <p class="text-xs text-yellow-800">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Disclaimer:</strong> This is an AI-based preliminary assessment only. 
+                                Please consult with a healthcare professional for accurate diagnosis.
+                            </p>
+                        </div>
+
+                        <!-- Medicine Suggestions -->
+                        {% if medicine_suggestions %}
+                        <div class="mt-6">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                                <span><i class="fas fa-pills mr-2 text-orange-600"></i>Recommended Treatment</span>
+                                {% if medicine_suggestions.get('source') == 'gemini_ai' %}
+                                <span class="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                                    <i class="fas fa-robot mr-1"></i>AI-Enhanced
+                                </span>
+                                {% endif %}
+                            </h4>
+                            
+                            <!-- AI Note -->
+                            {% if medicine_suggestions.get('note') %}
+                            <div class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                                <p class="text-xs text-blue-800">{{ medicine_suggestions.note }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if medicine_suggestions.get('primary_medicines') %}
+                            <div class="mb-4">
+                                <p class="font-semibold text-gray-700 text-sm mb-2 flex items-center">
+                                    <i class="fas fa-capsules text-orange-600 mr-2"></i>Primary Medications:
+                                </p>
+                                {% for med in medicine_suggestions.primary_medicines[:4] %}
+                                <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-2 hover:shadow-md transition">
+                                    <p class="font-semibold text-gray-800">{{ med.get('name', med.get('medication_name', 'Unknown Medicine')) }}</p>
+                                    {% if med.get('dosage') %}
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fas fa-prescription-bottle-alt mr-1"></i>{{ med.get('dosage', 'As prescribed') }}
+                                    </p>
+                                    {% endif %}
+                                    {% if med.get('frequency') or med.get('duration') %}
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>{{ med.get('frequency', '') }} {% if med.get('duration') %}for {{ med.get('duration') }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    {% if med.get('purpose') or med.get('type') %}
+                                    <p class="text-xs text-gray-600 italic mt-1">{{ med.get('purpose', med.get('type', '')) }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% if medicine_suggestions.get('supportive_care') %}
+                            <div class="mb-4">
+                                <p class="font-semibold text-gray-700 text-sm mb-2 flex items-center">
+                                    <i class="fas fa-hand-holding-medical text-green-600 mr-2"></i>Supportive Care:
+                                </p>
+                                {% for care in medicine_suggestions.supportive_care[:4] %}
+                                <div class="p-3 bg-green-50 border border-green-200 rounded-lg mb-2 hover:shadow-md transition">
+                                    <p class="font-semibold text-gray-800">{{ care.get('name', care.get('treatment/supplement_name', 'Care item')) }}</p>
+                                    {% if care.get('frequency') or care.get('dosage_and_frequency') %}
+                                    <p class="text-xs text-gray-600">{{ care.get('frequency', care.get('dosage_and_frequency', care.get('type', ''))) }}</p>
+                                    {% endif %}
+                                    {% if care.get('purpose') %}
+                                    <p class="text-xs text-gray-500 italic mt-1">{{ care.get('purpose') }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% if medicine_suggestions.get('precautions') %}
+                            <div class="mb-4">
+                                <p class="font-semibold text-gray-700 text-sm mb-2 flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Important Precautions:
+                                </p>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <ul class="space-y-2">
+                                        {% for precaution in medicine_suggestions.precautions[:7] %}
+                                        <li class="text-xs text-gray-700 flex items-start">
+                                            <i class="fas fa-shield-alt text-yellow-600 mr-2 mt-0.5"></i>
+                                            <span>{{ precaution }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if medicine_suggestions.get('when_to_seek_help') %}
+                            <div class="mb-4">
+                                <p class="font-semibold text-red-700 text-sm mb-2 flex items-center">
+                                    <i class="fas fa-ambulance text-red-600 mr-2"></i>When to Seek Emergency Help:
+                                </p>
+                                <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-3">
+                                    <ul class="space-y-2">
+                                        {% for sign in medicine_suggestions.when_to_seek_help[:6] %}
+                                        <li class="text-xs text-red-800 flex items-start">
+                                            <i class="fas fa-exclamation-circle text-red-600 mr-2 mt-0.5"></i>
+                                            <span>{{ sign }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if medicine_suggestions.get('additional_recommendations') %}
+                            <div class="mb-4">
+                                <p class="font-semibold text-gray-700 text-sm mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb text-blue-600 mr-2"></i>Additional Recommendations:
+                                </p>
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <p class="text-xs text-gray-700 whitespace-pre-line">{{ medicine_suggestions.additional_recommendations }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Full AI Response Toggle (for Gemini responses) -->
+                            {% if medicine_suggestions.get('full_recommendations') %}
+                            <div class="mt-4">
+                                <button onclick="toggleFullRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-semibold">
+                                    <i class="fas fa-chevron-down mr-1"></i>View Complete AI Analysis
+                                </button>
+                                <div id="fullRecommendations" class="hidden mt-3 bg-gray-50 border border-gray-300 rounded-lg p-4 text-xs text-gray-700 whitespace-pre-line max-h-96 overflow-y-auto">
+                                    {{ medicine_suggestions.full_recommendations }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-600">
+                            Select symptoms and click "Check Symptoms" to see predictions
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Information Section -->
+        <div class="mt-8 bg-blue-50 border border-blue-300 rounded-lg p-6">
+            <h3 class="text-lg font-bold text-blue-800 mb-3">
+                <i class="fas fa-info-circle mr-2"></i>How This Works
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
+                <div>
+                    <h4 class="font-semibold text-blue-800 mb-2">1. Select Symptoms</h4>
+                    <p>Choose all symptoms you're currently experiencing from the list.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-blue-800 mb-2">2. AI Analysis</h4>
+                    <p>Our AI analyzes your symptoms using advanced medical knowledge.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-blue-800 mb-2">3. Get Results</h4>
+                    <p>Receive preliminary predictions with confidence scores.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Voice Recording Indicator Animation */
+        .recording-indicator {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            position: relative;
+        }
+        
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse-recording 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-recording {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.5;
+            }
+        }
+        
+        .recording-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ef4444;
+            border-radius: 50%;
+            animation: ripple 1.5s ease-out infinite;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <script>
+        // Set confidence bar widths
+        document.querySelectorAll('.confidence-bar').forEach(bar => {
+            const confidence = bar.getAttribute('data-confidence');
+            bar.style.width = confidence + '%';
+        });
+
+        // Handle form submission
+        document.getElementById('symptomForm').addEventListener('submit', function(e) {
+            // Count selected symptoms
+            const selectedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            
+            if (selectedCount === 0) {
+                e.preventDefault();
+                alert('Please select at least one symptom');
+                return false;
+            }
+            
+            // Let form submit normally - Django/Flask will handle it
+            return true;
+        });
+
+        // ==================== VOICE INPUT FUNCTIONALITY ====================
+        
+        let recognition;
+        let recognitionTimeout;
+        let isRecognizing = false;
+        const RECOGNITION_DURATION = 5000; // 5 seconds
+        
+        // Get DOM elements
+        const voiceInputBtn = document.getElementById('voiceInputBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const voiceResults = document.getElementById('voiceResults');
+        const voiceError = document.getElementById('voiceError');
+        const statusText = document.getElementById('statusText');
+        const recordingTimerDisplay = document.getElementById('recordingTimer');
+        const transcriptText = document.getElementById('transcriptText');
+        const detectedSymptoms = document.getElementById('detectedSymptoms');
+        const errorText = document.getElementById('errorText');
+        
+        // Initialize Web Speech API
+        function initializeSpeechRecognition() {
+            // Check for Web Speech API support
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                console.error('Web Speech API not supported in this context');
+                return null;
+            }
+            
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            
+            return recognition;
+        }
+        
+        // Check browser compatibility on page load
+        function checkBrowserCompatibility() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            const isEdge = /Edg/.test(navigator.userAgent);
+            const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+            
+            if (!SpeechRecognition) {
+                console.warn('Browser:', navigator.userAgent);
+                console.warn('Web Speech API available:', !!SpeechRecognition);
+                return false;
+            }
+            return true;
+        }
+        
+        // Voice Input Button Click Handler
+        voiceInputBtn.addEventListener('click', async function() {
+            try {
+                // Hide previous results/errors
+                voiceResults.classList.add('hidden');
+                voiceError.classList.add('hidden');
+                
+                // Check if Web Speech API is supported
+                recognition = initializeSpeechRecognition();
+                
+                if (!recognition) {
+                    const isInternalBrowser = navigator.userAgent.includes('Code') || window.location.protocol === 'vscode-webview:';
+                    
+                    if (isInternalBrowser) {
+                        showError('Voice recognition requires an external browser. Please open this page in Chrome, Edge, or Safari: http://localhost:3000');
+                    } else {
+                        showError('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari. Current browser: ' + navigator.userAgent.split(' ')[0]);
+                    }
+                    return;
+                }
+                
+                // Request microphone permission
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop()); // Stop immediately after permission
+                } catch (permError) {
+                    showError('Microphone permission denied. Please allow microphone access and try again.');
+                    return;
+                }
+                
+                let finalTranscript = '';
+                let interimTranscript = '';
+                let startTime = Date.now();
+                
+                // Show recording status
+                voiceStatus.classList.remove('hidden');
+                statusText.textContent = 'Listening... (Speak now)';
+                voiceInputBtn.disabled = true;
+                voiceInputBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // Update timer
+                let timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    recordingTimerDisplay.textContent = `${elapsed}s / 5s`;
+                    
+                    if (elapsed >= 5) {
+                        clearInterval(timerInterval);
+                    }
+                }, 100);
+                
+                // Handle recognition results
+                recognition.onresult = function(event) {
+                    interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    // Update status with interim results
+                    if (interimTranscript) {
+                        statusText.textContent = `Listening: "${interimTranscript}"`;
+                    }
+                };
+                
+                // Handle recognition end
+                recognition.onend = function() {
+                    clearInterval(timerInterval);
+                    isRecognizing = false;
+                    
+                    if (finalTranscript.trim()) {
+                        // Process the transcript
+                        statusText.textContent = 'Processing...';
+                        processTranscript(finalTranscript.trim());
+                    } else {
+                        voiceStatus.classList.add('hidden');
+                        voiceInputBtn.disabled = false;
+                        voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        showError('No speech detected. Please try again and speak clearly.');
+                    }
+                };
+                
+                // Handle errors
+                recognition.onerror = function(event) {
+                    clearInterval(timerInterval);
+                    voiceStatus.classList.add('hidden');
+                    voiceInputBtn.disabled = false;
+                    voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    isRecognizing = false;
+                    
+                    console.error('Speech recognition error:', event.error);
+                    
+                    let errorMessage = 'Speech recognition error. ';
+                    switch(event.error) {
+                        case 'no-speech':
+                            errorMessage += 'No speech detected. Please try again.';
+                            break;
+                        case 'audio-capture':
+                            errorMessage += 'Microphone not accessible.';
+                            break;
+                        case 'not-allowed':
+                            errorMessage += 'Microphone permission denied.';
+                            break;
+                        case 'network':
+                            errorMessage += 'Network error. Please check your connection.';
+                            break;
+                        default:
+                            errorMessage += 'Please try again.';
+                    }
+                    
+                    showError(errorMessage);
+                };
+                
+                // Start recognition
+                recognition.start();
+                isRecognizing = true;
+                
+                // Auto-stop after 5 seconds
+                recognitionTimeout = setTimeout(() => {
+                    if (isRecognizing && recognition) {
+                        recognition.stop();
+                    }
+                }, RECOGNITION_DURATION);
+                
+            } catch (error) {
+                console.error('Error starting voice recognition:', error);
+                showError('Could not start voice recognition. Please try again.');
+            }
+        });
+        
+        function stopRecording() {
+            // Not needed for Web Speech API - keeping for compatibility
+            if (recognitionTimeout) {
+                clearTimeout(recognitionTimeout);
+            }
+        }
+        
+        async function processTranscript(transcript) {
+            try {
+                statusText.textContent = 'Analyzing symptoms...';
+                
+                // Send transcript to backend for symptom extraction
+                const response = await fetch('/dashboard/speech-to-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        transcript: transcript,
+                        use_web_speech: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide status
+                voiceStatus.classList.add('hidden');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                if (response.ok && data.status === 'success') {
+                    // Show success results
+                    displayVoiceResults(data);
+                } else {
+                    // Show error
+                    showError(data.message || 'An error occurred while processing your speech.');
+                }
+                
+            } catch (error) {
+                console.error('Error processing transcript:', error);
+                voiceStatus.classList.add('hidden');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                showError('Network error. Please check your connection and try again.');
+            }
+        }
+        
+        async function sendAudioToBackend(audioBlob, mimeType) {
+            try {
+                // Create form data
+                const formData = new FormData();
+                
+                // Determine file extension based on MIME type
+                let fileExt = 'webm';
+                if (mimeType.includes('wav')) {
+                    fileExt = 'wav';
+                }
+                
+                formData.append('audio', audioBlob, `recording.${fileExt}`);
+                formData.append('mime_type', mimeType);
+                
+                statusText.textContent = 'Recognizing symptoms...';
+                
+                // Send to backend
+                const response = await fetch('/dashboard/speech-to-text', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Hide status
+                voiceStatus.classList.add('hidden');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                if (response.ok && data.status === 'success') {
+                    // Show success results
+                    displayVoiceResults(data);
+                } else {
+                    // Show error
+                    showError(data.message || 'An error occurred while processing your speech.');
+                    
+                    // Play voice feedback if available
+                    if (data.voice_feedback_url) {
+                        playVoiceFeedback(data.voice_feedback_url);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error sending audio:', error);
+                voiceStatus.classList.add('hidden');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                showError('Network error. Please check your connection and try again.');
+            }
+        }
+        
+        function displayVoiceResults(data) {
+            // Display transcript
+            transcriptText.textContent = `"${data.transcript}"`;
+            
+            // Display detected symptoms
+            if (data.detected_symptoms && data.detected_symptoms.length > 0) {
+                detectedSymptoms.textContent = data.detected_symptoms.join(', ');
+            } else {
+                detectedSymptoms.textContent = 'None detected';
+            }
+            
+            voiceResults.classList.remove('hidden');
+            
+            // Display predictions in the predictions container
+            if (data.predictions && data.predictions.length > 0) {
+                displayPredictions(data.predictions, data.medicine_suggestions, data.selected_disease);
+            }
+            
+            // Scroll to results
+            voiceResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function displayPredictions(predictions, medicineSuggestions, selectedDisease) {
+            const container = document.getElementById('predictions-container');
+            
+            let html = '<div class="bg-white rounded-lg shadow-md p-6" id="predictions">';
+            html += '<h3 class="text-xl font-bold text-gray-800 mb-4">';
+            html += '<i class="fas fa-chart-bar mr-2 text-green-600"></i>Predictions';
+            html += '</h3>';
+            html += '<div class="space-y-3">';
+            
+            predictions.forEach(pred => {
+                html += '<div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">';
+                html += '<div class="flex justify-between items-start mb-2">';
+                html += `<h4 class="font-bold text-gray-800">${pred.disease}</h4>`;
+                html += `<span class="text-sm font-bold text-blue-600">${pred.confidence.toFixed(1)}%</span>`;
+                html += '</div>';
+                html += '<div class="w-full bg-gray-200 rounded-full h-2">';
+                html += `<div class="bg-blue-600 h-2 rounded-full" style="width: ${pred.confidence}%"></div>`;
+                html += '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            // Disclaimer
+            html += '<div class="mt-6 bg-yellow-50 border border-yellow-300 rounded-lg p-4">';
+            html += '<p class="text-xs text-yellow-800">';
+            html += '<i class="fas fa-exclamation-triangle mr-2"></i>';
+            html += '<strong>Disclaimer:</strong> This is an AI-based preliminary assessment only. ';
+            html += 'Please consult with a healthcare professional for accurate diagnosis.';
+            html += '</p>';
+            html += '</div>';
+            
+            // Medicine suggestions
+            if (medicineSuggestions) {
+                html += '<div class="mt-6">';
+                html += '<h4 class="text-lg font-bold text-gray-800 mb-4">';
+                html += '<i class="fas fa-pills mr-2 text-orange-600"></i>Recommended Treatment';
+                html += '</h4>';
+                
+                if (medicineSuggestions.primary_medicines && medicineSuggestions.primary_medicines.length > 0) {
+                    html += '<div class="mb-4">';
+                    html += '<p class="font-semibold text-gray-700 text-sm mb-2">Primary Medicines:</p>';
+                    medicineSuggestions.primary_medicines.slice(0, 3).forEach(med => {
+                        html += '<div class="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-2">';
+                        html += `<p class="font-semibold text-gray-800">${med.name || 'Unknown Medicine'}</p>`;
+                        html += `<p class="text-sm text-gray-600">${med.dosage || 'As prescribed'}</p>`;
+                        html += `<p class="text-xs text-gray-500">${med.frequency || 'As directed by doctor'}</p>`;
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (medicineSuggestions.supportive_care && medicineSuggestions.supportive_care.length > 0) {
+                    html += '<div class="mb-4">';
+                    html += '<p class="font-semibold text-gray-700 text-sm mb-2">Supportive Care:</p>';
+                    medicineSuggestions.supportive_care.slice(0, 3).forEach(care => {
+                        html += '<div class="p-3 bg-green-50 border border-green-200 rounded-lg mb-2">';
+                        html += `<p class="font-semibold text-gray-800">${care.name || 'Care item'}</p>`;
+                        html += `<p class="text-xs text-gray-600">${care.frequency || care.type || ''}</p>`;
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (medicineSuggestions.precautions && medicineSuggestions.precautions.length > 0) {
+                    html += '<div>';
+                    html += '<p class="font-semibold text-gray-700 text-sm mb-2">Important Precautions:</p>';
+                    html += '<ul class="space-y-1">';
+                    medicineSuggestions.precautions.slice(0, 3).forEach(precaution => {
+                        html += '<li class="text-xs text-gray-600">';
+                        html += `<i class="fas fa-check text-green-600 mr-2"></i>${precaution}`;
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+        
+        function showError(message) {
+            errorText.textContent = message;
+            voiceError.classList.remove('hidden');
+            voiceError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function playVoiceFeedback(url) {
+            const audio = new Audio(url);
+            audio.play().catch(error => {
+                console.error('Error playing voice feedback:', error);
+            });
+        }
+        
+        // Check browser compatibility on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const browserNotice = document.getElementById('browserNotice');
+            const voiceInputBtn = document.getElementById('voiceInputBtn');
+            
+            if (!SpeechRecognition) {
+                // Show browser compatibility notice
+                if (browserNotice) {
+                    browserNotice.classList.remove('hidden');
+                }
+                
+                // Optionally disable the button with a visual indicator
+                if (voiceInputBtn) {
+                    voiceInputBtn.title = 'Voice input requires Chrome, Edge, or Safari. Open http://localhost:3000 in a compatible browser.';
+                }
+                
+                console.warn('Web Speech API not supported. Browser:', navigator.userAgent);
+            } else {
+                console.log('Web Speech API is supported!');
+            }
+        });
+
+        // Toggle full AI recommendations
+        function toggleFullRecommendations() {
+            const fullRec = document.getElementById('fullRecommendations');
+            const button = event.target;
+            if (fullRec.classList.contains('hidden')) {
+                fullRec.classList.remove('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-up mr-1"></i>Hide Complete AI Analysis';
+            } else {
+                fullRec.classList.add('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-down mr-1"></i>View Complete AI Analysis';
+            }
+        }
+    </script>
+</body>
+</html>

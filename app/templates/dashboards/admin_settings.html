@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - HealthGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-sliders-h text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Admin Settings</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('dashboards.admin_dashboard') }}" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                        <button type="submit" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">System Settings</h2>
+            <p class="text-gray-600">Manage doctors and patients - Remove users from the system</p>
+        </div>
+
+        <!-- Alert Message -->
+        <div id="alertMessage" class="hidden mb-6"></div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Doctors Management -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-user-md mr-2 text-green-600"></i>Doctors ({{ doctors|length }})
+                    </h3>
+                </div>
+
+                <div class="space-y-3 max-h-[600px] overflow-y-auto">
+                    {% if doctors %}
+                        {% for doctor in doctors %}
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition" id="doctor-{{ doctor.id }}">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <p class="font-bold text-gray-800 text-lg">{{ doctor.full_name }}</p>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            <i class="fas fa-stethoscope mr-1"></i>{{ doctor.specialization }}
+                                        </p>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            <i class="fas fa-envelope mr-1"></i>{{ doctor.user.email }}
+                                        </p>
+                                        {% if doctor.license_number %}
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <i class="fas fa-id-card mr-1"></i>License: {{ doctor.license_number }}
+                                            </p>
+                                        {% endif %}
+                                        {% if doctor.phone %}
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <i class="fas fa-phone mr-1"></i>{{ doctor.phone }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <button data-doctor-id="{{ doctor.id }}" data-doctor-name="{{ doctor.full_name }}" class="remove-doctor-btn ml-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition flex items-center">
+                                        <i class="fas fa-trash mr-2"></i>Remove
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-12">
+                            <i class="fas fa-user-md text-gray-300 text-6xl mb-4"></i>
+                            <p class="text-gray-600">No doctors in the system</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Patients Management -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-hospital-user mr-2 text-purple-600"></i>Patients ({{ patients|length }})
+                    </h3>
+                </div>
+
+                <div class="space-y-3 max-h-[600px] overflow-y-auto">
+                    {% if patients %}
+                        {% for patient in patients %}
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:shadow-md transition" id="patient-{{ patient.id }}">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <p class="font-bold text-gray-800 text-lg">{{ patient.full_name }}</p>
+                                        {% if patient.age %}
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                <i class="fas fa-birthday-cake mr-1"></i>Age: {{ patient.age }}
+                                            </p>
+                                        {% endif %}
+                                        {% if patient.gender %}
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                <i class="fas fa-user mr-1"></i>{{ patient.gender }}
+                                            </p>
+                                        {% endif %}
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            <i class="fas fa-envelope mr-1"></i>{{ patient.user.email }}
+                                        </p>
+                                        {% if patient.phone %}
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <i class="fas fa-phone mr-1"></i>{{ patient.phone }}
+                                            </p>
+                                        {% endif %}
+                                        {% if patient.address %}
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>{{ patient.address }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <button data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.full_name }}" class="remove-patient-btn ml-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition flex items-center">
+                                        <i class="fas fa-trash mr-2"></i>Remove
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-12">
+                            <i class="fas fa-hospital-user text-gray-300 text-6xl mb-4"></i>
+                            <p class="text-gray-600">No patients in the system</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Box -->
+        <div class="mt-8 bg-red-50 border-l-4 border-red-600 rounded-lg p-6">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl mr-4 mt-1"></i>
+                <div>
+                    <h4 class="text-lg font-bold text-red-800 mb-2">Warning</h4>
+                    <p class="text-gray-700 text-sm">
+                        Removing a doctor or patient will permanently delete their account and all associated data, 
+                        including predictions and medical records. This action cannot be undone.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-lg">
+                <h3 class="text-xl font-bold"><i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-700 mb-6" id="confirmMessage"></p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeConfirmModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                        Cancel
+                    </button>
+                    <button id="confirmButton" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition">
+                        <i class="fas fa-trash mr-2"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingAction = null;
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = `p-4 rounded-lg border ${type === 'success' ? 'bg-green-100 border-green-300 text-green-800' : 'bg-red-100 border-red-300 text-red-800'}`;
+            alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}`;
+            alertDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                alertDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Event delegation for doctor remove buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-doctor-btn')) {
+                const btn = e.target.closest('.remove-doctor-btn');
+                const doctorId = btn.getAttribute('data-doctor-id');
+                const doctorName = btn.getAttribute('data-doctor-name');
+                removeDoctor(doctorId, doctorName);
+            }
+            
+            if (e.target.closest('.remove-patient-btn')) {
+                const btn = e.target.closest('.remove-patient-btn');
+                const patientId = btn.getAttribute('data-patient-id');
+                const patientName = btn.getAttribute('data-patient-name');
+                removePatient(patientId, patientName);
+            }
+        });
+
+        function removeDoctor(doctorId, doctorName) {
+            document.getElementById('confirmMessage').textContent = 
+                `Are you sure you want to remove Dr. ${doctorName}? This will permanently delete their account and all associated data.`;
+            
+            pendingAction = () => confirmRemoveDoctor(doctorId);
+            openConfirmModal();
+        }
+
+        function removePatient(patientId, patientName) {
+            document.getElementById('confirmMessage').textContent = 
+                `Are you sure you want to remove ${patientName}? This will permanently delete their account and all associated data.`;
+            
+            pendingAction = () => confirmRemovePatient(patientId);
+            openConfirmModal();
+        }
+
+        function openConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('hidden');
+            document.getElementById('confirmModal').classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            document.getElementById('confirmModal').classList.remove('flex');
+            pendingAction = null;
+        }
+
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            if (pendingAction) {
+                pendingAction();
+            }
+            closeConfirmModal();
+        });
+
+        async function confirmRemoveDoctor(doctorId) {
+            try {
+                const response = await fetch(`{{ url_for('dashboards.admin_dashboard') }}/admin/remove-doctor/${doctorId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove the doctor element from DOM
+                    const doctorElement = document.getElementById(`doctor-${doctorId}`);
+                    if (doctorElement) {
+                        doctorElement.style.transition = 'opacity 0.3s';
+                        doctorElement.style.opacity = '0';
+                        setTimeout(() => doctorElement.remove(), 300);
+                    }
+                    
+                    showAlert(data.message, 'success');
+                    
+                    // Reload after 2 seconds to update counts
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function confirmRemovePatient(patientId) {
+            try {
+                const response = await fetch(`{{ url_for('dashboards.admin_dashboard') }}/admin/remove-patient/${patientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove the patient element from DOM
+                    const patientElement = document.getElementById(`patient-${patientId}`);
+                    if (patientElement) {
+                        patientElement.style.transition = 'opacity 0.3s';
+                        patientElement.style.opacity = '0';
+                        setTimeout(() => patientElement.remove(), 300);
+                    }
+                    
+                    showAlert(data.message, 'success');
+                    
+                    // Reload after 2 seconds to update counts
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                closeConfirmModal();
+            }
+        }
+    </script>
+</body>
+</html>
