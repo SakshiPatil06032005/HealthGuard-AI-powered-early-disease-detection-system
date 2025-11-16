@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthGuard Medical ChatBot - Demo</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/axios@1.4.0/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .chatbot-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .chatbot-header .status {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #fff;
+        }
+
+        .message-wrapper {
+            display: flex;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-wrapper.user {
+            justify-content: flex-end;
+        }
+
+        .message-wrapper.bot {
+            justify-content: flex-start;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot {
+            background-color: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-text {
+            margin: 0;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message-time {
+            display: block;
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .message.user .message-time {
+            text-align: right;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .chatbot-input-area {
+            background-color: #f8f9fa;
+            padding: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-form {
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            resize: none;
+            max-height: 100px;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .message-input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .voice-btn, .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .voice-btn:hover:not(:disabled), .send-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            background-color: #667eea;
+            color: white;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .disclaimer {
+            font-size: 11px;
+            color: #666;
+            margin: 0;
+            text-align: center;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .demo-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #856404;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 85%;
+            }
+            .chatbot-header h1 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message {
+                max-width: 90%;
+            }
+            .chatbot-header h1 {
+                font-size: 16px;
+            }
+            .message-input {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Smart Disease Prediction based on symptoms
+        const symptomToDiseaseMapping = {
+            'fever': { disease: 'Viral Fever', confidence: 0.9, symptoms: ['high temperature', 'body ache', 'chills'] },
+            'cough': { disease: 'Respiratory Infection', confidence: 0.85, symptoms: ['dry cough', 'chest pain', 'shortness of breath'] },
+            'cold': { disease: 'Viral Fever', confidence: 0.8, symptoms: ['runny nose', 'sneezing', 'sore throat'] },
+            'headache': { disease: 'Migraine', confidence: 0.75, symptoms: ['throbbing pain', 'sensitivity to light', 'nausea'] },
+            'chest pain': { disease: 'Cardiac Condition', confidence: 0.95, symptoms: ['shortness of breath', 'dizziness', 'sweating'] },
+            'stomach': { disease: 'Gastric Issue', confidence: 0.8, symptoms: ['acidity', 'indigestion', 'bloating'] },
+            'breathing': { disease: 'Respiratory Infection', confidence: 0.9, symptoms: ['wheezing', 'difficulty breathing'] },
+            'nausea': { disease: 'Gastric Issue', confidence: 0.7, symptoms: ['vomiting', 'loss of appetite'] },
+            'dizziness': { disease: 'Cardiac Condition', confidence: 0.8, symptoms: ['lightheadedness', 'fainting'] },
+            'sore throat': { disease: 'Viral Fever', confidence: 0.75, symptoms: ['difficulty swallowing', 'pain'] }
+        };
+
+        function predictDisease(userMessage) {
+            const messageLower = userMessage.toLowerCase();
+            let bestMatch = null;
+            let highestConfidence = 0;
+
+            for (const [symptom, data] of Object.entries(symptomToDiseaseMapping)) {
+                if (messageLower.includes(symptom)) {
+                    if (data.confidence > highestConfidence) {
+                        highestConfidence = data.confidence;
+                        bestMatch = data;
+                    }
+                }
+            }
+
+            // If no exact match, try keyword matching
+            if (!bestMatch) {
+                const keywords = ['feel', 'have', 'suffering', 'sick', 'unwell', 'pain', 'problem'];
+                if (keywords.some(kw => messageLower.includes(kw))) {
+                    // Generic response for unclear symptoms
+                    return { disease: 'General Illness', confidence: 0.5, symptoms: ['unclear symptoms'] };
+                }
+            }
+
+            return bestMatch || null;
+        }
+
+        const mockMedicines = {
+            'Viral Fever': [
+                { name: 'Paracetamol', usage: 'Pain relief and fever reduction', warnings: 'Do not exceed 4000mg per day' },
+                { name: 'Ibuprofen', usage: 'Anti-inflammatory pain reliever', warnings: 'Take with food' }
+            ],
+            'Cardiac Condition': [
+                { name: 'Aspirin', usage: 'Blood thinner for heart conditions', warnings: 'May cause bleeding' }
+            ],
+            'Migraine': [
+                { name: 'Sumatriptan', usage: 'Migraine-specific treatment', warnings: 'Use only for migraines' }
+            ],
+            'Respiratory Infection': [
+                { name: 'Dextromethorphan', usage: 'Cough suppressant', warnings: 'May cause drowsiness' }
+            ],
+            'Gastric Issue': [
+                { name: 'Antacid', usage: 'Reduce stomach acidity', warnings: 'Take as directed' }
+            ]
+        };
+
+        const diseasePreventionTips = {
+            'Viral Fever': [
+                '🧼 Wash hands frequently with soap and water',
+                '😷 Wear masks in crowded places',
+                '🥗 Eat vitamin C rich foods (citrus, berries)',
+                '💧 Stay hydrated with water and warm liquids',
+                '😴 Get 7-8 hours of sleep daily',
+                '🏋️ Exercise regularly to boost immunity'
+            ],
+            'Cardiac Condition': [
+                '❤️ Exercise regularly (30 mins/day)',
+                '🥕 Eat heart-healthy foods (olive oil, nuts)',
+                '🚭 Avoid smoking and excess alcohol',
+                '📊 Monitor blood pressure regularly',
+                '🧂 Reduce salt intake in diet',
+                '😌 Practice stress management and yoga'
+            ],
+            'Migraine': [
+                '💤 Maintain regular sleep schedule',
+                '🍫 Avoid migraine triggers (caffeine, chocolate)',
+                '💧 Stay well hydrated throughout day',
+                '😌 Practice relaxation techniques',
+                '🌡️ Avoid sudden temperature changes',
+                '📵 Reduce screen time and blue light exposure'
+            ],
+            'Respiratory Infection': [
+                '🤧 Cover mouth while coughing/sneezing',
+                '🧼 Maintain hand hygiene',
+                '💨 Avoid pollution and smoke exposure',
+                '🥛 Drink warm milk with turmeric',
+                '🌡️ Maintain good air quality at home',
+                '🧖 Use humidifiers in dry weather'
+            ],
+            'Gastric Issue': [
+                '🍽️ Eat small frequent meals',
+                '⏱️ Avoid eating late at night',
+                '🌶️ Reduce spicy and fatty foods',
+                '🧊 Avoid carbonated drinks',
+                '🧘 Eat slowly and chew properly',
+                '☕ Limit coffee and alcohol consumption'
+            ]
+        };
+
+        function MedicalChatBot() {
+            const [messages, setMessages] = useState([
+                {
+                    id: 1,
+                    text: "Hello! 👋 I'm your HealthGuard medical assistant. How are you feeling today? Please describe your symptoms or any health concerns you have.",
+                    sender: 'bot',
+                    timestamp: new Date(),
+                }
+            ]);
+            const [inputValue, setInputValue] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const messagesEndRef = useRef(null);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            const handleSeverityLevel = (userMessage) => {
+                const severeKeywords = ['chest pain', 'breathing', 'bleeding', 'unconscious', 'severe', 'emergency', 'critical'];
+                const moderateKeywords = ['fever', 'infection', 'persistent', 'painful', 'nausea', 'vomiting', 'headache'];
+                
+                const messageLower = userMessage.toLowerCase();
+                
+                if (severeKeywords.some(kw => messageLower.includes(kw))) {
+                    return {
+                        level: 'severe',
+                        message: '⚠️ Based on your symptoms, you should visit a hospital or doctor immediately!'
+                    };
+                } else if (moderateKeywords.some(kw => messageLower.includes(kw))) {
+                    return {
+                        level: 'moderate',
+                        message: '📋 Monitor your condition and consult a doctor if symptoms worsen.'
+                    };
+                }
+                return {
+                    level: 'mild',
+                    message: '✅ This can usually be treated with rest and basic medicines.'
+                };
+            };
+
+            const generateBotResponse = (userMessage) => {
+                setIsLoading(true);
+
+                setTimeout(() => {
+                    const severity = handleSeverityLevel(userMessage);
+                    
+                    // Get disease prediction using smart algorithm
+                    const prediction = predictDisease(userMessage);
+
+                    let response = `I understand your symptoms. Here's my assessment:\n\n${severity.message}\n\n`;
+
+                    if (prediction) {
+                        response += `💊 **Predicted Condition**: ${prediction.disease} (${Math.round(prediction.confidence * 100)}% confidence)\n\n`;
+                        
+                        const medicines = mockMedicines[prediction.disease] || [];
+                        if (medicines.length > 0) {
+                            response += `💊 **Recommended Medicines:**\n`;
+                            medicines.forEach((med, idx) => {
+                                response += `\n${idx + 1}. **${med.name}**\n   Usage: ${med.usage}\n   ⚠️ ${med.warnings}`;
+                            });
+                        }
+
+                        const preventionTips = diseasePreventionTips[prediction.disease] || [];
+                        if (preventionTips.length > 0) {
+                            response += `\n\n🛡️ **Prevention Tips:**\n`;
+                            preventionTips.forEach((tip, idx) => {
+                                response += `\n${idx + 1}. ${tip}`;
+                            });
+                        }
+                    } else {
+                        response += `Please provide more details about your symptoms so I can better assist you.`;
+                    }
+
+                    response += `\n\n📞 If symptoms persist or worsen, seek medical attention immediately.`;
+
+                    const botMessage = {
+                        id: messages.length + 1,
+                        text: response,
+                        sender: 'bot',
+                        timestamp: new Date(),
+                    };
+
+                    setMessages(prev => [...prev, botMessage]);
+                    setIsLoading(false);
+                }, 1500);
+            };
+
+            const handleSendMessage = (e) => {
+                e.preventDefault();
+
+                if (!inputValue.trim()) return;
+
+                const userMessage = {
+                    id: messages.length + 1,
+                    text: inputValue,
+                    sender: 'user',
+                    timestamp: new Date(),
+                };
+
+                setMessages(prev => [...prev, userMessage]);
+                setInputValue('');
+
+                generateBotResponse(inputValue);
+            };
+
+            const formatTime = (date) => {
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            };
+
+            return (
+                <div className="chatbot-container">
+                    <div className="chatbot-header">
+                        <h1>🏥 HealthGuard Medical Assistant</h1>
+                        <p className="status">Online • Ready to help</p>
+                    </div>
+
+                    <div className="chatbot-messages">
+                        <div className="demo-notice">
+                            ✅ DEMO MODE: Smart disease prediction + Prevention tips enabled!
+                        </div>
+                        
+                        {messages.map((message) => (
+                            <div key={message.id} className={`message-wrapper ${message.sender}`}>
+                                <div className={`message ${message.sender}`}>
+                                    <p className="message-text">{message.text}</p>
+                                    <span className="message-time">{formatTime(message.timestamp)}</span>
+                                </div>
+                            </div>
+                        ))}
+
+                        {isLoading && (
+                            <div className="message-wrapper bot">
+                                <div className="message bot">
+                                    <div className="typing-indicator">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="chatbot-input-area">
+                        <form onSubmit={handleSendMessage} className="input-form">
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder="Describe your symptoms or ask a health question..."
+                                    disabled={isLoading}
+                                    className="message-input"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || !inputValue.trim()}
+                                    className="send-btn"
+                                >
+                                    {isLoading ? '⏳' : '➤'}
+                                </button>
+                            </div>
+                        </form>
+                        <p className="disclaimer">
+                            ⚠️ Disclaimer: This chatbot is for informational purposes only and not a substitute for professional medical advice.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<MedicalChatBot />);
+    </script>
+</body>
+</html>

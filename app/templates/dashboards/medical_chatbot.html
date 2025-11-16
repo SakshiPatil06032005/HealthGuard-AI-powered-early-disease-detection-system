@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical ChatBot - HealthGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .chatbot-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+        
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #fff;
+        }
+        
+        .message {
+            display: flex;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.bot {
+            justify-content: flex-start;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .message.user .message-bubble {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .message.bot .message-bubble {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .message-timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        .input-area {
+            padding: 16px;
+            background-color: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .input-field:focus {
+            border-color: #667eea;
+        }
+        
+        .btn-icon {
+            padding: 10px 12px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-icon:hover {
+            background-color: #764ba2;
+        }
+        
+        .btn-icon.listening {
+            background-color: #ff6b6b;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .severity-severe {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .severity-moderate {
+            background-color: #ffa94d;
+            color: white;
+        }
+        
+        .severity-mild {
+            background-color: #51cf66;
+            color: white;
+        }
+        
+        .medicine-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .chatbot-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chatbot-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .chatbot-messages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        .chatbot-messages::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-comments text-2xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Medical ChatBot</h1>
+                        <p class="text-blue-100 text-sm">AI-Powered Health Assistant</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('dashboards.patient_dashboard') }}" class="bg-blue-700 hover:bg-blue-900 px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto py-6 px-4 h-[calc(100vh-100px)]">
+        <div class="bg-white rounded-lg shadow-lg h-full flex flex-col">
+            <!-- Chatbot Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-lg">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-robot mr-2"></i>HealthGuard Medical Assistant
+                </h2>
+                <p class="text-blue-100 text-sm mt-1">Available to assist you 24/7</p>
+            </div>
+
+            <!-- Messages Container -->
+            <div id="messagesContainer" class="chatbot-messages">
+                <div class="message bot">
+                    <div>
+                        <div class="message-bubble">
+                            <div class="font-semibold mb-2">👋 Hello! I'm your HealthGuard Medical Assistant</div>
+                            <div>I'm here to help you understand your symptoms and provide medical guidance. Please describe your symptoms or any health concerns you have. Remember, I can provide preliminary guidance, but always consult with a healthcare professional for proper diagnosis.</div>
+                        </div>
+                        <div class="message-timestamp">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    class="input-field" 
+                    placeholder="Describe your symptoms... (e.g., 'I have a fever and cough')"
+                    autocomplete="off"
+                >
+                <button id="voiceBtn" class="btn-icon" title="Voice Input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button id="sendBtn" class="btn-icon" title="Send Message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Information Box -->
+        <div class="mt-4 bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4">
+            <h3 class="text-sm font-bold text-blue-800 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>How to Use the Medical ChatBot
+            </h3>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li><i class="fas fa-check text-green-600 mr-2"></i>Describe your symptoms clearly and in detail</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i>Use voice input by clicking the microphone button</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i>Get AI-powered predictions and recommendations</li>
+                <li><i class="fas fa-check text-green-600 mr-2"></i>Receive severity assessment and next steps</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messagesContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        let messageId = 1;
+        let isListening = false;
+
+        // Initialize Web Speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceBtn.classList.add('listening');
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                if (event.results[event.results.length - 1].isFinal) {
+                    userInput.value = transcript;
+                }
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceBtn.classList.remove('listening');
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                isListening = false;
+                voiceBtn.classList.remove('listening');
+                addBotMessage("Sorry, I couldn't understand your voice. Please try typing your message.");
+            };
+        }
+
+        // Voice Button Handler
+        voiceBtn.addEventListener('click', () => {
+            if (!recognition) {
+                addBotMessage("Sorry, your browser doesn't support voice recognition. Please type your message instead.");
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+
+        // Send Button Handler
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && userInput.value.trim()) {
+                sendMessage();
+            }
+        });
+
+        function addMessage(text, sender, severity = null) {
+            messageId++;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let bubbleHTML = `<div class="message-bubble">${text}`;
+            if (severity) {
+                bubbleHTML += `<div class="severity-badge severity-${severity.level}">${severity.message}</div>`;
+            }
+            bubbleHTML += `</div><div class="message-timestamp">${time}</div>`;
+            
+            messageDiv.innerHTML = `<div>${bubbleHTML}</div>`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addBotMessage(text, severity = null) {
+            addMessage(text, 'bot', severity);
+        }
+
+        function addUserMessage(text) {
+            addMessage(text, 'user');
+        }
+
+        function getSeverityLevel(text) {
+            const severeKeywords = ['chest pain', 'breathing', 'bleeding', 'unconscious', 'severe', 'emergency', 'critical', 'collapse', 'fracture', 'burn', 'poisoning', 'stroke', 'anaphylaxis'];
+            const moderateKeywords = ['fever', 'infection', 'persistent', 'worsening', 'painful', 'nausea', 'vomiting', 'headache', 'dizziness', 'severe cough'];
+            
+            const lowerText = text.toLowerCase();
+            
+            if (severeKeywords.some(keyword => lowerText.includes(keyword))) {
+                return {
+                    level: 'severe',
+                    message: '⚠️ SEVERE - Seek immediate medical attention'
+                };
+            } else if (moderateKeywords.some(keyword => lowerText.includes(keyword))) {
+                return {
+                    level: 'moderate',
+                    message: '⚠️ MODERATE - Consult a doctor soon'
+                };
+            }
+            return {
+                level: 'mild',
+                message: '✅ MILD - Monitor and rest'
+            };
+        }
+
+        function generateBotResponse(userMessage) {
+            const severity = getSeverityLevel(userMessage);
+            const lowerMessage = userMessage.toLowerCase();
+            
+            let response = '';
+
+            // Disease-symptom mapping
+            if (lowerMessage.includes('fever') || lowerMessage.includes('temperature')) {
+                response = "🌡️ <strong>Fever Detected</strong><br>Common causes include viral infections, bacterial infections, or flu. ";
+                response += "<div class='medicine-card'><strong>Recommendations:</strong><br>• Take paracetamol or ibuprofen<br>• Stay hydrated<br>• Rest well<br>• Monitor temperature regularly</div>";
+            } else if (lowerMessage.includes('cough') || lowerMessage.includes('cold')) {
+                response = "🤧 <strong>Cough/Cold Symptoms Detected</strong><br>This could be a viral respiratory infection. ";
+                response += "<div class='medicine-card'><strong>Recommendations:</strong><br>• Use cough syrup with honey<br>• Stay hydrated<br>• Use humidifier<br>• Avoid smoke and pollution</div>";
+            } else if (lowerMessage.includes('headache')) {
+                response = "🤕 <strong>Headache Detected</strong><br>Could be tension headache, migraine, or dehydration. ";
+                response += "<div class='medicine-card'><strong>Recommendations:</strong><br>• Rest in a quiet, dark room<br>• Stay hydrated<br>• Use pain reliever if needed<br>• Apply cold compress</div>";
+            } else if (lowerMessage.includes('stomach') || lowerMessage.includes('abdominal') || lowerMessage.includes('nausea')) {
+                response = "🤢 <strong>Stomach Issues Detected</strong><br>This could be gastritis, indigestion, or food poisoning. ";
+                response += "<div class='medicine-card'><strong>Recommendations:</strong><br>• Eat light, bland foods<br>• Stay hydrated with electrolytes<br>• Avoid spicy/oily food<br>• Rest your digestive system</div>";
+            } else if (lowerMessage.includes('chest') && lowerMessage.includes('pain')) {
+                response = "⚠️ <strong>CHEST PAIN - SEEK IMMEDIATE MEDICAL ATTENTION</strong><br>This could be serious and requires urgent evaluation. ";
+                response += "<div class='medicine-card'><strong>URGENT:</strong><br>• Call emergency services immediately<br>• Do not delay<br>• This is not to be ignored</div>";
+            } else {
+                response = `<strong>Analyzing your symptoms:</strong><br>"${userMessage}"<br><br>Based on your description, I recommend:<br>`;
+                response += "<div class='medicine-card'><strong>General Recommendations:</strong><br>• Monitor your symptoms<br>• Stay hydrated and get adequate rest<br>• Use over-the-counter medications if needed<br>• See a doctor if symptoms persist for more than 3 days</div>";
+            }
+
+            return response;
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addUserMessage(message);
+            userInput.value = '';
+
+            // Show loading
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot';
+            loadingDiv.innerHTML = `<div class="message-bubble"><div class="loading-spinner"></div> Processing your symptoms...</div>`;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Simulate processing delay
+            setTimeout(() => {
+                loadingDiv.remove();
+                
+                // Get severity and response
+                const severity = getSeverityLevel(message);
+                const response = generateBotResponse(message);
+                addBotMessage(response, severity);
+            }, 1500);
+        }
+
+        // Focus on input field
+        userInput.focus();
+    </script>
+</body>
+</html>

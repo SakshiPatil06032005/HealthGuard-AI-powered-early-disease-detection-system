@@ -34,6 +34,17 @@ except ImportError:
     enhanced_report_gen = None
     USE_ENHANCED = False
 
+# Comprehensive predictor with 40+ diseases
+try:
+    from app.prediction_adapter import prediction_adapter
+    comprehensive_predictor = prediction_adapter
+    USE_COMPREHENSIVE = True
+    logger.info(f"✅ Comprehensive predictor loaded with {comprehensive_predictor.comprehensive_predictor.disease_count} diseases")
+except ImportError:
+    comprehensive_predictor = None
+    USE_COMPREHENSIVE = False
+    logger.warning("⚠️ Comprehensive predictor not available")
+
 dashboards = Blueprint('dashboards', __name__, url_prefix='/dashboard')
 
 def get_admin_stats():
@@ -197,6 +208,18 @@ def patient_view_prediction(prediction_id):
     return render_template('dashboards/patient_prediction_detail.html',
                          prediction=prediction,
                          patient=patient)
+
+@dashboards.route('/patient/medical-chatbot', methods=['GET'])
+@login_required
+@role_required('patient')
+def medical_chatbot():
+    """Medical ChatBot for patients"""
+    patient = get_current_patient()
+    if not patient:
+        flash('Patient profile not found', 'danger')
+        return redirect(url_for('routes.index'))
+    
+    return render_template('dashboards/medical_chatbot.html', patient=patient)
 
 @dashboards.route('/api/admin/stats', methods=['GET'])
 @login_required
@@ -560,22 +583,26 @@ def xray_prediction():
             # Read file and analyze
             image_bytes = file.read()
             
-            # Use enhanced predictor if available, otherwise fallback
-            if USE_ENHANCED and enhanced_predictor:
+            # Use comprehensive predictor for enhanced disease detection
+            if USE_COMPREHENSIVE and comprehensive_predictor:
+                analysis_result = comprehensive_predictor.predict(image_bytes)
+                logger.info(f"✅ Using comprehensive predictor ({comprehensive_predictor.comprehensive_predictor.disease_count} diseases)")
+            elif USE_ENHANCED and enhanced_predictor:
                 analysis_result = enhanced_predictor.predict(image_bytes)
+                logger.info("Using enhanced predictor")
             else:
                 analysis_result = image_predictor.analyze_xray(image_bytes)
+                logger.info("Using basic image predictor")
             
             if analysis_result.get('success'):
-                predictions = analysis_result.get('predictions', [])
+                # Handle comprehensive predictor format (returns 'diseases_detected') and old formats
+                detected_diseases = analysis_result.get('diseases_detected', analysis_result.get('predictions', analysis_result.get('detected_diseases', [])))
+                predictions = detected_diseases  # For template compatibility
                 analysis_details = analysis_result
-                
-                # Get detected diseases with details
-                detected_diseases = analysis_result.get('detected_diseases', [])
                 
                 # Get medicine suggestions for top prediction
                 if detected_diseases:
-                    top_disease = detected_diseases[0]['disease']
+                    top_disease = detected_diseases[0].get('disease', 'Unknown')
                     severity = detected_diseases[0].get('severity', 'moderate')
                     medicine_suggestions = medicine_recommender.get_medicine_suggestions(top_disease, severity)
                 
@@ -593,8 +620,12 @@ def xray_prediction():
                     uploaded_filename = filename
                     
                     # Create prediction record
-                    top_disease = detected_diseases[0]['disease'] if detected_diseases else 'Unknown'
+                    top_disease = detected_diseases[0].get('disease', 'Unknown') if detected_diseases else 'Unknown'
                     top_confidence = detected_diseases[0].get('confidence', 0) if detected_diseases else 0
+                    
+                    # Handle confidence as percentage or decimal
+                    if top_confidence > 1:
+                        top_confidence = top_confidence / 100.0
                     
                     prediction = Prediction(
                         patient_id=patient.id,
@@ -688,22 +719,26 @@ def mri_prediction():
             # Read file and analyze
             image_bytes = file.read()
             
-            # Use enhanced predictor if available, otherwise fallback (same analysis for MRI)
-            if USE_ENHANCED and enhanced_predictor:
+            # Use comprehensive predictor for MRI (same system as X-ray for consistency)
+            if USE_COMPREHENSIVE and comprehensive_predictor:
+                analysis_result = comprehensive_predictor.predict(image_bytes)
+                logger.info(f"✅ Using comprehensive predictor ({comprehensive_predictor.comprehensive_predictor.disease_count} diseases)")
+            elif USE_ENHANCED and enhanced_predictor:
                 analysis_result = enhanced_predictor.predict(image_bytes)
+                logger.info("Using enhanced predictor")
             else:
                 analysis_result = image_predictor.analyze_xray(image_bytes)
+                logger.info("Using basic image predictor")
             
             if analysis_result.get('success'):
-                predictions = analysis_result.get('predictions', [])
+                # Handle comprehensive predictor format (returns 'diseases_detected') and old formats
+                detected_diseases = analysis_result.get('diseases_detected', analysis_result.get('predictions', analysis_result.get('detected_diseases', [])))
+                predictions = detected_diseases  # For template compatibility
                 analysis_details = analysis_result
-                
-                # Get detected diseases with details
-                detected_diseases = analysis_result.get('detected_diseases', [])
                 
                 # Get medicine suggestions for top prediction
                 if detected_diseases:
-                    top_disease = detected_diseases[0]['disease']
+                    top_disease = detected_diseases[0].get('disease', 'Unknown')
                     severity = detected_diseases[0].get('severity', 'moderate')
                     medicine_suggestions = medicine_recommender.get_medicine_suggestions(top_disease, severity)
                 
@@ -1769,3 +1804,84 @@ def asha_worker_remove_patient(patient_id):
 def asha_worker_edit_patient(patient_id):
     """Legacy route - redirects to new route"""
     return asha_dashboard_edit_patient(patient_id)
+
+
+# ============================================================================
+# COMPREHENSIVE DISEASE PREDICTION API ENDPOINTS
+# ============================================================================
+
+@dashboards.route('/api/diseases', methods=['GET'])
+def get_all_diseases():
+    """Get all supported diseases with comprehensive information"""
+    if not USE_COMPREHENSIVE or not comprehensive_predictor:
+        return jsonify({'error': 'Comprehensive predictor not available'}), 503
+    
+    try:
+        diseases_info = comprehensive_predictor.get_supported_diseases()
+        return jsonify({
+            'success': True,
+            'total_diseases': diseases_info['total_diseases'],
+            'by_category': diseases_info['by_category'],
+            'all_diseases': diseases_info['all_diseases']
+        })
+    except Exception as e:
+        logger.error(f"Error fetching diseases: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@dashboards.route('/api/disease/<disease_name>', methods=['GET'])
+def get_disease_details(disease_name):
+    """Get detailed information about a specific disease"""
+    if not USE_COMPREHENSIVE or not comprehensive_predictor:
+        return jsonify({'error': 'Comprehensive predictor not available'}), 503
+    
+    try:
+        disease_info = comprehensive_predictor.get_disease_info(disease_name)
+        if disease_info:
+            return jsonify({
+                'success': True,
+                'disease': disease_info
+            })
+        else:
+            return jsonify({'error': 'Disease not found'}), 404
+    except Exception as e:
+        logger.error(f"Error fetching disease details: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@dashboards.route('/api/prediction-stats', methods=['GET'])
+def get_prediction_stats():
+    """Get prediction system statistics"""
+    if not USE_COMPREHENSIVE or not comprehensive_predictor:
+        return jsonify({'error': 'Comprehensive predictor not available'}), 503
+    
+    try:
+        stats = {
+            'total_diseases_supported': comprehensive_predictor.comprehensive_predictor.disease_count,
+            'diseases_by_category': {},
+            'system_status': 'Active',
+            'features': [
+                'Ensemble deep learning models (ResNet50, VGG16, InceptionV3)',
+                'Advanced image preprocessing with histogram equalization',
+                'Multi-disease detection and classification',
+                'Severity assessment and risk stratification',
+                'Clinical recommendations and specialist referrals',
+                '40+ disease categories supported'
+            ]
+        }
+        
+        # Count diseases by category
+        diseases = comprehensive_predictor.comprehensive_predictor.list_supported_diseases()
+        for disease in diseases:
+            info = comprehensive_predictor.comprehensive_predictor.get_disease_info(disease)
+            if info:
+                category = info.category
+                stats['diseases_by_category'][category] = stats['diseases_by_category'].get(category, 0) + 1
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        logger.error(f"Error getting prediction stats: {e}")
+        return jsonify({'error': str(e)}), 500
